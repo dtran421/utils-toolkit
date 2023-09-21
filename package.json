@@ -1,6 +1,6 @@
 {
   "name": "utils-toolkit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "An opinionated, ts-enabled toolkit to lighten up your /utils directory",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -14,7 +14,7 @@
     "lint": "eslint --ext .ts src",
     "vup": "changeset",
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "release": "changeset publish"
+    "release": "yarn build && changeset publish"
   },
   "author": "Duke Tran",
   "license": "ISC",
