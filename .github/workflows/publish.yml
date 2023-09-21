@@ -23,6 +23,9 @@ jobs:
         with:
           node-version: 16.x
 
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
       - name: Publish to NPM
         uses: changesets/action@v1
         with:
