@@ -14,7 +14,7 @@
     "lint": "eslint --ext .ts src",
     "vup": "changeset",
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "release": "yarn build && changeset publish"
+    "release": "changeset publish"
   },
   "author": "Duke Tran",
   "license": "ISC",
