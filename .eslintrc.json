@@ -1,7 +1,6 @@
 {
   "extends": [
     "eslint:recommended",
-    "airbnb",
     "prettier",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended"
@@ -22,10 +21,8 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "import/prefer-default-export": "off",
     "no-unused-vars": "off",
-    "no-console": ["warn", { "allow": ["info", "warn", "error"] }],
-    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+    "no-console": ["warn", { "allow": ["info", "warn", "error"] }]
   },
   "overrides": [
     {

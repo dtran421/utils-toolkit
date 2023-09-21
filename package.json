@@ -3,17 +3,23 @@
   "version": "0.1.0",
   "description": "An opinionated, ts-enabled toolkit to lighten up your /utils directory",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "test": "jest --watch",
-    "transpile": "tsc"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --ext .ts src",
+    "vup": "changeset",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "release": "yarn build && changeset publish"
   },
   "author": "Duke Tran",
   "license": "ISC",
   "devDependencies": {
+    "@changesets/cli": "^2.26.2",
     "@jest/globals": "^29.7.0",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
@@ -23,6 +29,11 @@
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
     "ts-jest": "^29.1.1",
+    "tsup": "^7.2.0",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^1.14.0"
   }
 }
