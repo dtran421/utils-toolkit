@@ -1,6 +1,6 @@
 {
   "name": "utils-toolkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An opinionated, ts-enabled toolkit to lighten up your /utils directory",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
