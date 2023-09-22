@@ -7,24 +7,44 @@ import { isNullish } from "./general";
 /* Components */
 
 /**
- * Ok: The operation was successful, and the value inside contains the result of the operation.
+ * Container for a success value of a successful operation. The value should contain data returned from the operation.
  *
- * `unwrap()` will return the value if it is called on an Ok variant.
+ * Note that the `value` should not be accessed directly, as this would circumvent checking if the result is an `Ok`
+ * or `Err` variant first. Attempting to access the `value` directly will throw an error.
  *
- * `ok()` will return the value if it is called on an Ok variant.
+ * > Unfortunately, Typescript doesn't support discriminated unions via private properties, so the `ok` property is
+ * used to determine if the result is an `Ok` or `Err` variant. However, in an ideal world (perhaps in the future),
+ * `isOk()` and `isErr()` would be used instead to be more precise.
+ *
+ * `unwrap()` will return the value if it is called on an `Ok` variant.
+ *
+ * `unwrapErr()` will return the value if it is called on an `Ok` variant.
  */
-export type Ok<T> = { value: T; unwrap: () => T; ok: () => T; isOk: () => true; isErr: () => false };
+export type Ok<T> = { ok: true; value: T; unwrap: () => T; unwrapErr: () => T };
 /**
- * Err: The operation failed, and the value inside contains information about the failure.
+ * Container for an error value of a failed operation. The error should contain information about the failure.
  * This variant is generically typed with E to indicate it can contain different types of error values.
  *
- * `unwrap()` will return the error if it is called on an Err variant.
+ * Note that the `error` should not be accessed directly, as this would circumvent checking if the result is an `Ok`
+ * or `Err` variant first. Attempting to access the `error` directly will throw an error.
  *
- * `ok()` will throw the error if it is called on an Err variant.
+ * > Unfortunately, Typescript doesn't support discriminated unions via private properties, so the `ok` property is
+ * used to determine if the result is an `Ok` or `Err` variant. However, in an ideal world (perhaps in the future),
+ * `isOk()` and `isErr()` would be used instead to be more precise.
+ *
+ * `unwrap()` will return the error if it is called on an `Err` variant.
+ *
+ * `unwrapErr()` will throw the error if it is called on an `Err` variant.
  */
-export type Err<E> = { error: E; unwrap: () => E; ok: () => never; isOk: () => false; isErr: () => true };
+export type Err<E> = {
+  ok: false;
+  error: E;
+  unwrap: () => E;
+  unwrapErr: () => never;
+};
 /**
- * Result: The result of an operation that can fail.
+ * The result of an operation that can fail. It will contain a value (which can be null) if the operation was successful,
+ * or an error if the operation failed.
  *
  * This type is generically typed with T and E to indicate it can contain different types of success and error values.
  */
@@ -33,7 +53,7 @@ export type Result<T, E> = Ok<T> | Err<E>;
 /* Result constructor */
 export const Result = <T = unknown, E = Error>(p: T | E): Result<T, E> => {
   const ok = !(p instanceof Error);
-  const o = { isOk: () => ok, isErr: () => !ok };
+  const o = { ok };
 
   Object.defineProperties(o, {
     [ok ? "value" : "error"]: {
@@ -44,7 +64,7 @@ export const Result = <T = unknown, E = Error>(p: T | E): Result<T, E> => {
     unwrap: {
       value: () => p,
     },
-    ok: {
+    unwrapErr: {
       value: () => {
         if (ok) {
           return p;
@@ -65,7 +85,14 @@ export const Result = <T = unknown, E = Error>(p: T | E): Result<T, E> => {
 /* Components */
 
 /**
- * Some: The option contains a value.
+ * Container for a non-nullish (not necessarily truthy) result of an operation. The value should contain data returned from the operation.
+ *
+ * Note that the value cannot be accessed directly. This is to prevent the value from being accessed without checking
+ * if the option is a `Some` or `None` variant first. Attempting to access the value directly will throw an error.
+ *
+ * > Unfortunately, Typescript doesn't support discriminated unions via private properties, so the `some` property is
+ * used to determine if the option is a `Some` or `None` variant. However, in an ideal world (perhaps in the future),
+ * `isSome()` and `isNone()` would be used instead to be more precise.
  *
  * `coalesce()` will return the value if it is called on a Some variant, regardless of whether a default value is provided.
  */
@@ -73,11 +100,16 @@ export type Some<T> = {
   some: true;
   value: T;
   coalesce: (defaultValue?: T) => T;
-  isNone: () => false;
-  isSome: () => true;
 };
 /**
- * None: The option does not contain a value.
+ * Container for a nullish result of an operation. The value should contain a nullish value (null or undefined).
+ *
+ * Note that the value cannot be accessed directly. This is to prevent the value from being accessed without checking
+ * if the option is a `Some` or `None` variant first. Attempting to access the value directly will throw an error.
+ *
+ * > Unfortunately, Typescript doesn't support discriminated unions via private properties, so the `some` property is
+ * used to determine if the option is a `Some` or `None` variant. However, in an ideal world (perhaps in the future),
+ * `isSome()` and `isNone()` would be used instead to be more precise.
  *
  * `coalesce()` will return the default value if it is called on a None variant, or null if no default value is provided.
  */
@@ -85,12 +117,11 @@ export type None<T> = {
   some: false;
   value: null | undefined;
   coalesce: (defaultValue?: T) => T;
-  isNone: () => true;
-  isSome: () => false;
 };
 
 /**
- * Option: A value that may or may not exist.
+ * The result of an operation that may return an optional value. It can contain a non-nullish (not necessarily truthy) value
+ * or a nullish value (null or undefined).
  *
  * This type is generically typed with T to indicate it can contain different types of values.
  */
@@ -99,7 +130,7 @@ export type Option<T> = Some<T> | None<T>;
 /* Option constructor */
 export const Option = <T = unknown>(value?: T | null): Option<T> => {
   const some = !isNullish(value);
-  const o = {};
+  const o = { some };
 
   Object.defineProperties(o, {
     value: {
@@ -109,12 +140,6 @@ export const Option = <T = unknown>(value?: T | null): Option<T> => {
     },
     coalesce: {
       value: (defaultValue?: T) => (some ? value : defaultValue ?? null),
-    },
-    isNone: {
-      value: () => !some,
-    },
-    isSome: {
-      value: () => some,
     },
   });
 
