@@ -8,7 +8,7 @@ import { Result } from "./return-types";
  */
 export interface Success<T> {
   success: true;
-  data: T;
+  data: T | null;
 }
 
 /**
@@ -32,8 +32,12 @@ export type ApiResponse<T> = Success<T> | Failure;
 /* Components */
 
 /* ApiResponse constructor */
-export const ApiResponse = <T = unknown>(o: T | Error): ApiResponse<T> =>
-  o instanceof Error
+export const ApiResponse = <T = unknown>(o: T | Error | null): ApiResponse<T> => {
+  if (o === undefined) {
+    throw new Error("ApiResponse cannot contain undefined data");
+  }
+
+  return o instanceof Error
     ? {
         success: false,
         error: o,
@@ -42,6 +46,7 @@ export const ApiResponse = <T = unknown>(o: T | Error): ApiResponse<T> =>
         success: true,
         data: o,
       };
+};
 
 /**
  * Consume an API response and return a Result.

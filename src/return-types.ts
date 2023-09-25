@@ -51,9 +51,9 @@ export type Err<E> = {
 export type Result<T, E> = Ok<T> | Err<E>;
 
 /* Result constructor */
-export const Result = <T = unknown, E = Error>(p: T | E): Result<T, E> => {
+export const Result = <T = unknown, E = Error>(p: T | E | null | undefined): Result<T, E> => {
   const ok = !(p instanceof Error);
-  const o = { ok };
+  const o = { ok, toString: () => (ok ? `Ok(${p})` : `Err(${p})`) };
 
   Object.defineProperties(o, {
     [ok ? "value" : "error"]: {
@@ -130,7 +130,7 @@ export type Option<T> = Some<T> | None<T>;
 /* Option constructor */
 export const Option = <T = unknown>(value?: T | null): Option<T> => {
   const some = !isNullish(value);
-  const o = { some };
+  const o = { some, toString: () => (some ? `Some(${value})` : "None(null)") };
 
   Object.defineProperties(o, {
     value: {

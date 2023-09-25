@@ -1,132 +1,203 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 
 import { Option, Result } from "../src/return-types";
 import { TestError } from "./stubs";
 
 describe("Result", () => {
-  test("it identifies itself as ok or err", () => {
-    const okResult = Result<string, Error>("test");
-    expect(okResult.ok).toBe(true);
+  describe.each([
+    { result: Result<string, Error>("test"), expected: "test", condition: "a value" },
+    { result: Result<string, Error>(null), expected: null, condition: "null and the type is explicitly defined" },
+    {
+      result: Result<string, Error>(undefined),
+      expected: undefined,
+      condition: "undefined and the type is explicitly defined",
+    },
+    { result: Result(null), expected: null, condition: "null and the type is not defined" },
+    { result: Result(undefined), expected: undefined, condition: "undefined and the type is not defined" },
+  ])("when provided $condition", ({ result, expected }) => {
+    it(`identifies itself as ok`, () => {
+      expect(result.ok).toBe(true);
+    });
 
-    const okResultWithNull = Result<null, Error>(null);
-    expect(okResultWithNull.ok).toBe(true);
+    it("unwraps its value", () => {
+      expect(result.unwrap()).toBe(expected);
+    });
 
-    const okResultWithUndefined = Result<undefined, Error>(undefined);
-    expect(okResultWithUndefined.ok).toBe(true);
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in result).toBe(true);
+      expect(() => result.ok && result.value).toThrowError("cannot access result directly, use `unwrap()` instead!");
+      expect("error" in result).toBe(false);
+    });
 
-    const errResult = Result<string, Error>(new Error("test"));
-    expect(errResult.ok).toBe(false);
-
-    const errResultWithTestError = Result<string, TestError>(new TestError("test"));
-    expect(errResultWithTestError.ok).toBe(false);
+    it("prints itself as a string", () => {
+      expect(result.toString()).toBe(`Ok(${expected})`);
+    });
   });
 
-  test("it unwraps its value/error", () => {
-    const okResult = Result<string, Error>("test");
+  describe.each([
+    { result: Result<string, Error>(new Error("test")), expected: new Error("test"), condition: "an error" },
+    {
+      result: Result<string, Error>(new TestError("test")),
+      expected: new TestError("test"),
+      condition: "a custom error",
+    },
+  ])("when provided $condition", ({ result, expected }) => {
+    it(`identifies itself as err`, () => {
+      expect(result.ok).toBe(false);
+    });
 
-    expect(okResult.unwrap()).toBe("test");
-    expect(okResult.unwrapErr()).toBe("test");
+    it("unwraps its error", () => {
+      expect(result.unwrap()).toBeInstanceOf(Error);
+      expect(!result.ok && result.unwrap().message).toBe(expected.message);
+      expect(() => result.unwrapErr()).toThrowError(expected.message);
+    });
 
-    const okResultWithNull = Result<null, Error>(null);
+    it("has an error property and throws an error when accessed directly", () => {
+      expect("error" in result).toBe(true);
+      expect(() => !result.ok && result.error).toThrowError("cannot access result directly, use `unwrap()` instead!");
+      expect("value" in result).toBe(false);
+    });
 
-    expect(okResultWithNull.unwrap()).toBe(null);
-    expect(okResultWithNull.unwrapErr()).toBe(null);
-
-    const okResultWithUndefined = Result<undefined, Error>(undefined);
-
-    expect(okResultWithUndefined.unwrap()).toBe(undefined);
-    expect(okResultWithUndefined.unwrapErr()).toBe(undefined);
-
-    const errResult = Result<string, Error>(new Error("test"));
-
-    expect(errResult.unwrap()).toBeInstanceOf(Error);
-    expect((errResult.unwrap() as Error).message).toBe("test");
-    expect(() => errResult.unwrapErr()).toThrowError("test");
-
-    const errResultWithTestError = Result<string, TestError>(new TestError("test"));
-
-    expect(errResultWithTestError.unwrap()).toBeInstanceOf(TestError);
-    expect((errResultWithTestError.unwrap() as TestError).message).toBe("Test: test");
-    expect(() => errResultWithTestError.unwrapErr()).toThrowError("Test: test");
-  });
-
-  test("it has a value/error property and throws an error when accessed directly", () => {
-    const okResult = Result<string, Error>("test");
-
-    expect("value" in okResult).toBe(true);
-    expect(() => okResult.ok && okResult.value).toThrowError("cannot access result directly, use `unwrap()` instead!");
-    expect("error" in okResult).toBe(false);
-
-    const okResultWithNull = Result<null, Error>(null);
-
-    expect("value" in okResultWithNull).toBe(true);
-    expect(() => okResultWithNull.ok && okResultWithNull.value).toThrowError(
-      "cannot access result directly, use `unwrap()` instead!"
-    );
-    expect("error" in okResultWithNull).toBe(false);
-
-    const okResultWithUndefined = Result<undefined, Error>(undefined);
-
-    expect("value" in okResultWithUndefined).toBe(true);
-    expect(() => okResultWithUndefined.ok && okResultWithUndefined.value).toThrowError(
-      "cannot access result directly, use `unwrap()` instead!"
-    );
-
-    const errResult = Result<string, Error>(new Error("test"));
-
-    expect("error" in errResult).toBe(true);
-    expect(() => !errResult.ok && errResult.error).toThrowError(
-      "cannot access result directly, use `unwrap()` instead!"
-    );
-    expect("value" in errResult).toBe(false);
-
-    const errResultWithTestError = Result<string, TestError>(new TestError("test"));
-
-    expect("error" in errResultWithTestError).toBe(true);
-    expect(() => !errResultWithTestError.ok && errResultWithTestError.error).toThrowError(
-      "cannot access result directly, use `unwrap()` instead!"
-    );
-    expect("value" in errResultWithTestError).toBe(false);
+    it("prints itself as a string", () => {
+      expect(result.toString()).toBe(`Err(${expected})`);
+    });
   });
 });
 
 describe("Option", () => {
-  test("it identifies itself as some or none", () => {
-    const someOption = Option<string>("test");
-    expect(someOption.some).toBe(true);
+  describe.each([
+    { option: Option<string>("test"), expected: "test", defaultVal: "default", condition: "a value" },
+    { option: Option<string>(""), expected: "", defaultVal: "default", condition: "an empty string" },
+  ])("when provided $condition", ({ option, expected, defaultVal }) => {
+    it(`identifies itself as some`, () => {
+      expect(option.some).toBe(true);
+    });
 
-    const noneOption = Option<string>(null);
-    expect(noneOption.some).toBe(false);
+    it("coalesces its value", () => {
+      expect(option.coalesce()).toBe(expected);
+      expect(option.coalesce(defaultVal)).toBe(expected);
+    });
+
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in option).toBe(true);
+      expect(() => option.some && option.value).toThrowError(
+        "cannot access option directly, use `coalesce()` instead!"
+      );
+      expect("error" in option).toBe(false);
+    });
+
+    it("prints itself as a string", () => {
+      expect(option.toString()).toBe(`Some(${expected})`);
+    });
   });
 
-  test("it coalesces its value", () => {
-    const someOption = Option<string>("test");
+  describe.each([
+    { option: Option<number>(0), expected: 0, defaultVal: 1, condition: "a 0" },
+    { option: Option<number>(NaN), expected: NaN, defaultVal: 1, condition: "a NaN" },
+  ])("when provided $condition", ({ option, expected, defaultVal }) => {
+    it(`identifies itself as some`, () => {
+      expect(option.some).toBe(true);
+    });
 
-    expect(someOption.coalesce()).toBe("test");
-    expect(someOption.coalesce("default")).toBe("test");
+    it("coalesces its value", () => {
+      expect(option.coalesce()).toBe(expected);
+      expect(option.coalesce(defaultVal)).toBe(expected);
+    });
 
-    const noneOption = Option<string>(null);
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in option).toBe(true);
+      expect(() => option.some && option.value).toThrowError(
+        "cannot access option directly, use `coalesce()` instead!"
+      );
+      expect("error" in option).toBe(false);
+    });
 
-    expect(noneOption.coalesce()).toBe(null);
-    expect(noneOption.coalesce("default")).toBe("default");
-
-    const undefinedNoneOption = Option<string>(undefined);
-
-    expect(undefinedNoneOption.coalesce()).toBe(null);
-    expect(undefinedNoneOption.coalesce("default")).toBe("default");
+    it("prints itself as a string", () => {
+      expect(option.toString()).toBe(`Some(${expected})`);
+    });
   });
 
-  test("it has a value property and throws an error when accessed directly", () => {
-    const someOption = Option<string>("test");
+  describe("when provided a false", () => {
+    const option = Option<boolean>(false);
 
-    expect("value" in someOption).toBe(true);
-    expect(() => someOption.value).toThrowError("cannot access option directly, use `coalesce()` instead!");
-    expect("error" in someOption).toBe(false);
+    it(`identifies itself as some`, () => {
+      expect(option.some).toBe(true);
+    });
 
-    const noneOption = Option<string>(null);
+    it("coalesces its value", () => {
+      expect(option.coalesce()).toBe(false);
+      expect(option.coalesce(true)).toBe(false);
+    });
 
-    expect("value" in noneOption).toBe(true);
-    expect(() => noneOption.value).toThrowError("cannot access option directly, use `coalesce()` instead!");
-    expect("error" in noneOption).toBe(false);
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in option).toBe(true);
+      expect(() => option.some && option.value).toThrowError(
+        "cannot access option directly, use `coalesce()` instead!"
+      );
+      expect("error" in option).toBe(false);
+    });
+
+    it("prints itself as a string", () => {
+      expect(option.toString()).toBe(`Some(${false})`);
+    });
+  });
+
+  describe("when provided an empty array", () => {
+    const option = Option<string[]>([]);
+
+    it(`identifies itself as some`, () => {
+      expect(option.some).toBe(true);
+    });
+
+    it("coalesces its value", () => {
+      expect(option.coalesce()).toEqual([]);
+      expect(option.coalesce(["default"])).toEqual([]);
+    });
+
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in option).toBe(true);
+      expect(() => option.some && option.value).toThrowError(
+        "cannot access option directly, use `coalesce()` instead!"
+      );
+      expect("error" in option).toBe(false);
+    });
+
+    it("prints itself as a string", () => {
+      expect(option.toString()).toBe(`Some(${[]})`);
+    });
+  });
+
+  describe.each([
+    {
+      option: Option<string>(null),
+      defaultVal: "default",
+      condition: "null and the type is explicitly defined",
+    },
+    {
+      option: Option<string>(undefined),
+      defaultVal: "default",
+      condition: "undefined and the type is explicitly defined",
+    },
+  ])("when provided $condition", ({ option, defaultVal }) => {
+    it(`identifies itself as none`, () => {
+      expect(option.some).toBe(false);
+    });
+
+    it("coalesces its value", () => {
+      expect(option.coalesce()).toBe(null);
+      expect(option.coalesce(defaultVal)).toBe(defaultVal);
+    });
+
+    it("has a value property and throws an error when accessed directly", () => {
+      expect("value" in option).toBe(true);
+      expect(() => !option.some && option.value).toThrowError(
+        "cannot access option directly, use `coalesce()` instead!"
+      );
+      expect("error" in option).toBe(false);
+    });
+
+    it("prints itself as a string", () => {
+      expect(option.toString()).toBe("None(null)");
+    });
   });
 });
