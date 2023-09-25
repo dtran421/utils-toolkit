@@ -1,5 +1,13 @@
 # utils-toolkit
 
+## 0.2.2
+
+### Patch Changes
+
+- 4a7b12f: Added support for undefined values in ApiResponse
+
+  Not entirely sure if it's done correctly, but it works for now.
+
 ## 0.2.1
 
 ### Patch Changes
