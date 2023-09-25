@@ -9,7 +9,7 @@
  * is not set up to run React code)
  */
 
-import { consumeApiResponse } from "../src/api";
+import { ApiResponse, consumeApiResponse } from "../src/api";
 // ... other imports
 
 type Data = Record<string, string>;
@@ -24,7 +24,8 @@ const fetchData = async () => {
   const res = await fetch("https://my-api.com");
   const resData = await res.json();
 
-  const data = consumeApiResponse<Data>(resData);
+  const apiResponse = ApiResponse<Data>(resData);
+  const data = consumeApiResponse<Data>(apiResponse);
 
   if (!data.ok) {
     // const error = data.unwrapErr(); <-- if you want to be forceful and risk crashing your page

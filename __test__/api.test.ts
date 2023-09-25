@@ -8,9 +8,11 @@ describe("ApiResponse", () => {
     { data: "test", condition: "a value" },
     { data: null, condition: "null and the type is explicitly defined" },
     { data: null, condition: "null and the type is not defined" },
+    { data: undefined, condition: "undefined and the type is explicitly defined" },
+    { data: undefined, condition: "undefined and the type is not defined" },
   ])("when provided $condition", ({ data }) => {
     it("returns the data if the input is not an error", () => {
-      const dataResult = ApiResponse(data).unwrapErr();
+      const dataResult = ApiResponse(data);
 
       expect(dataResult).toEqual({ success: true, data });
     });
@@ -21,24 +23,11 @@ describe("ApiResponse", () => {
     { error: new TestError("test"), condition: "a custom error" },
   ])("when provided $condition", ({ error }) => {
     it("returns an error if the input is an error", () => {
-      const errorResult = ApiResponse(error).unwrapErr();
+      const errorResult = ApiResponse(error);
       const apiResponse = errorResult;
 
       expect(apiResponse).toEqual({ success: false, error });
       expect(!apiResponse.success && apiResponse.error.message).toEqual(error.message);
-    });
-  });
-
-  describe("when provided undefined", () => {
-    it("throws an error if the input is undefined and the type is explicitly defined", () => {
-      // @ts-expect-error: intentionally testing undefined
-      expect(() => ApiResponse<string>(undefined).unwrapErr()).toThrowError(
-        "ApiResponse cannot contain undefined data"
-      );
-    });
-
-    it("throws an error if the input is undefined and the type is not defined", () => {
-      expect(() => ApiResponse(undefined).unwrapErr()).toThrowError("ApiResponse cannot contain undefined data");
     });
   });
 });
@@ -48,12 +37,14 @@ describe("consumeApiResponse", () => {
     { data: "test", condition: "a value" },
     { data: null, condition: "null and the type is explicitly defined" },
     { data: null, condition: "null and the type is not defined" },
+    { data: undefined, condition: "undefined and the type is explicitly defined" },
+    { data: undefined, condition: "undefined and the type is not defined" },
   ])(`when provided $condition`, ({ data }) => {
     it("returns the data if the response has no error", () => {
-      const dataResponse = ApiResponse(data).unwrapErr();
+      const dataResponse = ApiResponse(data);
       const result = consumeApiResponse(dataResponse);
 
-      expect(result.ok && result.unwrap().coalesce()).toEqual(data);
+      expect(result.ok && result.unwrap().coalesce()).toEqual(data ?? null);
     });
   });
 
@@ -62,7 +53,7 @@ describe("consumeApiResponse", () => {
     { error: new TestError("test"), condition: "a custom error" },
   ])("when provided $condition", ({ error }) => {
     it("returns an error if the response has an error", () => {
-      const errorResponse = ApiResponse(error).unwrapErr();
+      const errorResponse = ApiResponse(error);
       const result = consumeApiResponse(errorResponse);
 
       expect(result.unwrap()).toEqual(error);

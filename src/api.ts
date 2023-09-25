@@ -32,23 +32,16 @@ export type ApiResponse<T> = Success<T> | Failure;
 /* Components */
 
 /* ApiResponse constructor */
-export const ApiResponse = <T = unknown>(o: T | Error | null): Result<ApiResponse<T>, Error> => {
-  if (o === undefined) {
-    return Result<ApiResponse<T>, Error>(new Error("ApiResponse cannot contain undefined data"));
-  }
-
-  return Result<ApiResponse<T>, Error>(
-    o instanceof Error
-      ? {
-          success: false,
-          error: o,
-        }
-      : {
-          success: true,
-          data: o,
-        }
-  );
-};
+export const ApiResponse = <T = unknown>(o: T | Error | null): ApiResponse<T | null> =>
+  o instanceof Error
+    ? {
+        success: false,
+        error: o,
+      }
+    : {
+        success: true,
+        data: o,
+      };
 
 /**
  * Consume an API response and return a Result.
