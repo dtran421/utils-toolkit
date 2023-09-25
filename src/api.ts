@@ -1,4 +1,4 @@
-import { Result } from "./return-types";
+import { Option, Result } from "./return-types";
 
 /**
  * Container for data returned from a successful API call.
@@ -8,7 +8,7 @@ import { Result } from "./return-types";
  */
 export interface Success<T> {
   success: true;
-  data: T;
+  data: T | null;
 }
 
 /**
@@ -32,16 +32,23 @@ export type ApiResponse<T> = Success<T> | Failure;
 /* Components */
 
 /* ApiResponse constructor */
-export const ApiResponse = <T = unknown>(o: T | Error): ApiResponse<T> =>
-  o instanceof Error
-    ? {
-        success: false,
-        error: o,
-      }
-    : {
-        success: true,
-        data: o,
-      };
+export const ApiResponse = <T = unknown>(o: T | Error | null): Result<ApiResponse<T>, Error> => {
+  if (o === undefined) {
+    return Result<ApiResponse<T>, Error>(new Error("ApiResponse cannot contain undefined data"));
+  }
+
+  return Result<ApiResponse<T>, Error>(
+    o instanceof Error
+      ? {
+          success: false,
+          error: o,
+        }
+      : {
+          success: true,
+          data: o,
+        }
+  );
+};
 
 /**
  * Consume an API response and return a Result.
@@ -50,10 +57,14 @@ export const ApiResponse = <T = unknown>(o: T | Error): ApiResponse<T> =>
  * is a simple object with a `data` or `error` property. The `error` property
  * should be a string for ease of displaying.
  */
-export const consumeApiResponse = <T = unknown>(response: ApiResponse<T>): Result<T, Error> => {
+export const consumeApiResponse = <T = unknown>(response: ApiResponse<T>): Result<Option<T>, Error> => {
   if (!response.success) {
-    return Result<T, Error>(response.error);
+    return Result<Option<T>, Error>(response.error);
   }
 
-  return Result<T, Error>(response.data);
+  if (response.data === null) {
+    return Result<Option<T>, Error>(Option<T>(null));
+  }
+
+  return Result<Option<T>, Error>(Option<T>(response.data));
 };

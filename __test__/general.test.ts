@@ -1,57 +1,25 @@
-import { describe, test, expect } from "@jest/globals";
+import { describe, it, expect } from "@jest/globals";
 
 import { isNullish } from "../src/general";
 
 describe("isNullish", () => {
-  test("it returns true for null", () => {
-    expect(isNullish(null)).toBe(true);
-  });
-
-  test("it returns true for undefined", () => {
-    expect(isNullish(undefined)).toBe(true);
-  });
-
-  test("it returns false for 0", () => {
-    expect(isNullish(0)).toBe(false);
-  });
-
-  test("it returns false for false", () => {
-    expect(isNullish(false)).toBe(false);
-  });
-
-  test("it returns false for empty string", () => {
-    expect(isNullish("")).toBe(false);
-  });
-
-  test("it returns false for empty array", () => {
-    expect(isNullish([])).toBe(false);
-  });
-
-  test("it returns false for empty object", () => {
-    expect(isNullish({})).toBe(false);
-  });
-
-  test("it returns false for NaN", () => {
-    expect(isNullish(NaN)).toBe(false);
-  });
-
-  test("it returns false for Infinity", () => {
-    expect(isNullish(Infinity)).toBe(false);
-    expect(isNullish(-Infinity)).toBe(false);
-  });
-
-  test("it returns false for function", () => {
-    expect(
-      isNullish(() => {
-        // do nothing
-      })
-    ).toBe(false);
-  });
-
-  test("it returns false for class", () => {
-    class Test {}
-    expect(isNullish(Test)).toBe(false);
-
-    expect(isNullish(new Test())).toBe(false);
+  describe.each([
+    { value: null, expected: true, condition: "null" },
+    { value: undefined, expected: true, condition: "undefined" },
+    { value: 0, expected: false, condition: "0" },
+    { value: false, expected: false, condition: "false" },
+    { value: "", expected: false, condition: "empty string" },
+    { value: [], expected: false, condition: "empty array" },
+    { value: {}, expected: false, condition: "empty object" },
+    { value: NaN, expected: false, condition: "NaN" },
+    { value: Infinity, expected: false, condition: "Infinity" },
+    { value: -Infinity, expected: false, condition: "-Infinity" },
+    { value: () => {}, expected: false, condition: "function" },
+    { value: class Test {}, expected: false, condition: "class" },
+    { value: new (class Test {})(), expected: false, condition: "class instance" },
+  ])(`when provided %s`, ({ value, expected, condition }) => {
+    it(`returns ${expected} for ${condition}`, () => {
+      expect(isNullish(value)).toBe(expected);
+    });
   });
 });
