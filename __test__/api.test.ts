@@ -1,71 +1,72 @@
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 
 import { ApiResponse, consumeApiResponse } from "../src/api";
 import { TestError } from "./stubs";
 
 describe("ApiResponse", () => {
-  test("it returns an error if the input is an error", () => {
-    const error = new Error("test");
-    const errorResult = ApiResponse<string>(error);
+  describe.each([
+    { data: "test", condition: "a value" },
+    { data: null, condition: "null and the type is explicitly defined" },
+    { data: null, condition: "null and the type is not defined" },
+  ])("when provided $condition", ({ data }) => {
+    it("returns the data if the input is not an error", () => {
+      const dataResult = ApiResponse(data).unwrapErr();
 
-    expect(errorResult).toEqual({ success: false, error });
-    expect(!errorResult.success && errorResult.error.message).toEqual(error.message);
+      expect(dataResult).toEqual({ success: true, data });
+    });
   });
 
-  test("it returns an error if the input is a custom error", () => {
-    const error = new TestError("test");
-    const errorResult = ApiResponse(error);
+  describe.each([
+    { error: new Error("test"), condition: "an error" },
+    { error: new TestError("test"), condition: "a custom error" },
+  ])("when provided $condition", ({ error }) => {
+    it("returns an error if the input is an error", () => {
+      const errorResult = ApiResponse(error).unwrapErr();
+      const apiResponse = errorResult;
 
-    expect(errorResult).toEqual({ success: false, error });
+      expect(apiResponse).toEqual({ success: false, error });
+      expect(!apiResponse.success && apiResponse.error.message).toEqual(error.message);
+    });
   });
 
-  test("it returns the data if the input is not an error", () => {
-    const dataResult = ApiResponse("test");
+  describe("when provided undefined", () => {
+    it("throws an error if the input is undefined and the type is explicitly defined", () => {
+      // @ts-expect-error: intentionally testing undefined
+      expect(() => ApiResponse<string>(undefined).unwrapErr()).toThrowError(
+        "ApiResponse cannot contain undefined data"
+      );
+    });
 
-    expect(dataResult).toEqual({ success: true, data: "test" });
-  });
-
-  test("it returns the null data if the input is null", () => {
-    const dataResult = ApiResponse(null);
-
-    expect(dataResult).toEqual({ success: true, data: null });
-  });
-
-  test("it returns the undefined data if the input is undefined", () => {
-    const dataResult = ApiResponse(undefined);
-
-    expect(dataResult).toEqual({ success: true, data: undefined });
+    it("throws an error if the input is undefined and the type is not defined", () => {
+      expect(() => ApiResponse(undefined).unwrapErr()).toThrowError("ApiResponse cannot contain undefined data");
+    });
   });
 });
 
 describe("consumeApiResponse", () => {
-  test("it returns an error if the response has an error", () => {
-    const errorResponse = ApiResponse(new Error("test"));
-    const result = consumeApiResponse(errorResponse);
+  describe.each([
+    { data: "test", condition: "a value" },
+    { data: null, condition: "null and the type is explicitly defined" },
+    { data: null, condition: "null and the type is not defined" },
+  ])(`when provided $condition`, ({ data }) => {
+    it("returns the data if the response has no error", () => {
+      const dataResponse = ApiResponse(data).unwrapErr();
+      const result = consumeApiResponse(dataResponse);
 
-    expect(result.unwrap()).toEqual(new Error("test"));
-
-    const errorResponseWithTestError = ApiResponse(new TestError("test"));
-    const resultWithTestError = consumeApiResponse(errorResponseWithTestError);
-
-    expect(resultWithTestError.unwrap()).not.toEqual(new Error("test"));
-    expect(resultWithTestError.unwrap()).toEqual(new TestError("test"));
+      expect(result.ok && result.unwrap().coalesce()).toEqual(data);
+    });
   });
 
-  test("it returns the data if the response has no error", () => {
-    const dataResponse = ApiResponse("test");
-    const result = consumeApiResponse(dataResponse);
+  describe.each([
+    { error: new Error("test"), condition: "an error" },
+    { error: new TestError("test"), condition: "a custom error" },
+  ])("when provided $condition", ({ error }) => {
+    it("returns an error if the response has an error", () => {
+      const errorResponse = ApiResponse(error).unwrapErr();
+      const result = consumeApiResponse(errorResponse);
 
-    expect(result.unwrapErr()).toEqual("test");
-
-    const dataResponseWithNull = ApiResponse(null);
-    const resultWithNull = consumeApiResponse(dataResponseWithNull);
-
-    expect(resultWithNull.unwrapErr()).toEqual(null);
-
-    const dataResponseWithUndefined = ApiResponse(undefined);
-    const resultWithUndefined = consumeApiResponse(dataResponseWithUndefined);
-
-    expect(resultWithUndefined.unwrapErr()).toEqual(undefined);
+      expect(result.unwrap()).toEqual(error);
+      expect(() => result.unwrapErr()).toThrowError(error.message);
+    });
   });
 });
