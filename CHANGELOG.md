@@ -1,5 +1,11 @@
 # utils-toolkit
 
+## 0.2.1
+
+### Patch Changes
+
+- 9a026d1: Added support for null values when creating `ApiResponse`s
+
 ## 0.2.0
 
 ### Minor Changes
