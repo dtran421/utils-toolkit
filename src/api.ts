@@ -32,7 +32,7 @@ export type ApiResponse<T> = Success<T> | Failure;
 /* Components */
 
 /* ApiResponse constructor */
-export const ApiResponse = <T = unknown>(o: T | Error | null): ApiResponse<T | null> =>
+export const ApiResponse = <T = unknown>(o: T | Error | null): ApiResponse<T> =>
   o instanceof Error
     ? {
         success: false,
@@ -52,11 +52,7 @@ export const ApiResponse = <T = unknown>(o: T | Error | null): ApiResponse<T | n
  */
 export const consumeApiResponse = <T = unknown>(response: ApiResponse<T>): Result<Option<T>, Error> => {
   if (!response.success) {
-    return Result<Option<T>, Error>(response.error);
-  }
-
-  if (response.data === null) {
-    return Result<Option<T>, Error>(Option<T>(null));
+    return Result<Option<T>, Error>(response.error ?? new Error("Unknown error"));
   }
 
   return Result<Option<T>, Error>(Option<T>(response.data));
