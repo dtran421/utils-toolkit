@@ -60,4 +60,13 @@ describe("consumeApiResponse", () => {
       expect(() => result.unwrapErr()).toThrowError(error.message);
     });
   });
+
+  it("returns an error if the response has no error and response failed", () => {
+    const responseWithNoError = {
+      success: false,
+    };
+    const result = consumeApiResponse(responseWithNoError as ApiResponse<unknown>);
+
+    expect(() => result.unwrapErr()).toThrowError("Unknown error");
+  });
 });
