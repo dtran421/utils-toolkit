@@ -1,5 +1,17 @@
 # utils-toolkit
 
+## 0.2.4
+
+### Patch Changes
+
+- isNullish TS return value narrowing
+
+## 0.2.3
+
+### Patch Changes
+
+- 0632e0d: consumeApiResponse now handles failed responses with no error
+
 ## 0.2.2
 
 ### Patch Changes
