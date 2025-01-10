@@ -1,5 +1,12 @@
 # utils-toolkit
 
+
+## 0.2.4
+
+### Patch Changes
+
+- isNullish TS return value narrowing
+
 ## 0.2.3
 
 ### Patch Changes
